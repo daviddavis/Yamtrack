@@ -18,6 +18,7 @@ from decouple import (
     undefined,
 )
 from django.core.cache import CacheKeyWarning
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_URL = config("BASE_URL", default=None)
 if BASE_URL:
@@ -551,6 +552,36 @@ USER_MESSAGE_RETENTION_DAYS = config(
     default=30,
     cast=int,
 )
+
+
+def _parse_refresh_days(raw):
+    """Parse REFRESH_TMDB_METADATA_DAYS env value, returning days or None."""
+    # TMDB's /changes endpoint caps the lookup window at 14 days.
+    max_days = 14
+
+    if raw is None:
+        return None
+    text = str(raw).strip().lower()
+    if text in ("", "none", "0", "false", "off", "disabled"):
+        return None
+    try:
+        value = int(text)
+    except ValueError as err:
+        msg = f"REFRESH_TMDB_METADATA_DAYS must be an integer or None, got {raw!r}"
+        raise ImproperlyConfigured(msg) from err
+    if not 1 <= value <= max_days:
+        msg = (
+            f"REFRESH_TMDB_METADATA_DAYS must be between 1 and {max_days} "
+            f"(TMDB /changes window cap), got {value}"
+        )
+        raise ImproperlyConfigured(msg)
+    return value
+
+
+REFRESH_TMDB_METADATA_DAYS = _parse_refresh_days(
+    config("REFRESH_TMDB_METADATA_DAYS", default="3"),
+)
+
 CELERY_BEAT_SCHEDULE = {
     "reload_calendar": {
         "task": "Reload calendar",
@@ -569,6 +600,11 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 60 * 60 * 24,  # every 24 hours
     },
 }
+if REFRESH_TMDB_METADATA_DAYS:
+    CELERY_BEAT_SCHEDULE["refresh_tmdb_metadata"] = {
+        "task": "Refresh TMDB metadata",
+        "schedule": 60 * 60 * 24 * REFRESH_TMDB_METADATA_DAYS,
+    }
 
 IS_PROD = not any(cmd in sys.argv for cmd in ("runserver", "test"))
 if IS_PROD:

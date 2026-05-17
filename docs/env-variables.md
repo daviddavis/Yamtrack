@@ -37,6 +37,7 @@ See [media-imports](media-imports.md).
 | `DEBUG`            | Default to `False`. Set to `True` for debugging.                                                                                                                                                     |
 | `ADMIN_ENABLED`    | Default to `False`. Set to `True` to enable the Django admin interface.                                                                                                                              |
 | `TRACK_TIME`       | Default to `True`. Set to `False` to disable time tracking in Yamtrack.                                                                                                                              |
+| `REFRESH_TMDB_METADATA_DAYS` | Default to `3`. How often (in days) to run the background task that refreshes metadata for tracked TMDB items reported as changed by [TMDB's `/changes` feed](https://developer.themoviedb.org/reference/changes-movie-list). Must be between `1` and `14` (TMDB's window cap). Set to `None`, `0`, or `false` to disable the task. |
 
 ## User and System Configuration
 

@@ -807,11 +807,14 @@ def watch_provider_regions():
     return data
 
 
-def get_changed_ids(media_type):
-    """Return changed TMDB ids for the given media type over the last days."""
+def get_changed_ids(media_type, days=3):
+    """Return changed TMDB ids for the given media type over the last ``days``.
+
+    TMDB caps the window at 14 days; callers must stay within that limit.
+    """
     url = f"{base_url}/{media_type}/changes"
     end_date = timezone.localdate()
-    start_date = end_date - timedelta(days=3)
+    start_date = end_date - timedelta(days=days)
     changed_ids = set()
     page = 1
 
@@ -843,11 +846,11 @@ def get_changed_ids(media_type):
     return changed_ids
 
 
-def tv_changes():
-    """Return changed TV ids from TMDB for the last days across all pages."""
-    return get_changed_ids(MediaTypes.TV.value)
+def tv_changes(days=3):
+    """Return changed TV ids from TMDB for the last ``days`` across all pages."""
+    return get_changed_ids(MediaTypes.TV.value, days=days)
 
 
-def movie_changes():
-    """Return changed movie ids from TMDB for the last days across all pages."""
-    return get_changed_ids(MediaTypes.MOVIE.value)
+def movie_changes(days=3):
+    """Return changed movie ids from TMDB for the last ``days`` across all pages."""
+    return get_changed_ids(MediaTypes.MOVIE.value, days=days)
